@@ -6,10 +6,12 @@ import (
 	"golang.org/x/crypto/sha3"
 	"reflect"
 	"strings"
+//	"bytes"
 )
 
 type Flag_value struct {
 	encoded_prefix []uint8
+	//here can be hashed_value of node (if branch or ext)
 	value          string
 }
 
@@ -26,8 +28,16 @@ type MerklePatriciaTrie struct {
 }
 
 func (mpt *MerklePatriciaTrie) Get(key string) string {
-	// TODO
-	return ""
+	encodedKey := keyToHex(key)
+	encodedKey = append(encodedKey, 16)
+	encodedKey = compact_encode(encodedKey)
+//	fmt.Println(mpt.root)
+	n := mpt.GetByNode(mpt.db[mpt.root], encodedKey)
+	if (n.flag_value.value != "") {
+		return n.flag_value.value
+	} else {
+	return "no such key"
+	}
 }
 
 
@@ -44,7 +54,7 @@ func (mpt *MerklePatriciaTrie) Insert(key string, new_value string) {
 		n.flag_value.encoded_prefix = encodedKey
 		n.flag_value.value = new_value
 		root := n.hash_node()
-		
+		mpt.root = root
 		mpt.db = map[string]Node { 
 			root : n,
 		}
@@ -57,6 +67,45 @@ func (mpt *MerklePatriciaTrie) Insert(key string, new_value string) {
 	 
 	
 }
+
+func (mpt *MerklePatriciaTrie) GetByNode(node Node, key []byte) Node {
+	n := Node{}
+	
+	if len(key) == 0 {
+		return node
+	}
+
+	if (node.node_type == 0) {
+		return n
+	}
+
+	switch node.node_type {
+	case 2:
+		key_node := node.flag_value.encoded_prefix
+		hash_node := node.flag_value.value //hash_value of Node
+		n = mpt.db[hash_node]
+		
+		//fmt.Println(key[2:])
+
+		if len(key) > len(key_node) && strings.HasPrefix(string(key_node), string(key)) {
+			return mpt.GetByNode(n, key[len(key_node):])
+		} else if len(key) == len(key_node) && strings.HasPrefix(string(key_node), string(key)) {
+			return node
+		}
+		return n
+	case 1:
+		hash_node := node.flag_value.value
+		n = mpt.db[hash_node]
+		return mpt.GetByNode(n, key[1:])
+		//case 0
+	default:
+		return n
+	}
+	
+	return n
+}
+
+
 
 func (mpt *MerklePatriciaTrie) Delete(key string) {
 	// TODO
