@@ -5,21 +5,23 @@ import (
 	"fmt"
 	"golang.org/x/crypto/sha3"
 	"reflect"
+	"strings"
 )
 
 type Flag_value struct {
 	encoded_prefix []uint8
-	value string
+	value          string
 }
 
 type Node struct {
-	node_type int // 0: Null, 1: Branch, 2: Ext or Leaf
+	node_type    int // 0: Null, 1: Branch, 2: Ext or Leaf
 	branch_value [17]string
-	flag_value Flag_value
+	flag_value   Flag_value
 }
 
 type MerklePatriciaTrie struct {
 	db map[string]Node
+	//string is a hashed_value of Node
 	root string
 }
 
@@ -28,23 +30,85 @@ func (mpt *MerklePatriciaTrie) Get(key string) string {
 	return ""
 }
 
+
 func (mpt *MerklePatriciaTrie) Insert(key string, new_value string) {
-	// TODO
+	
+	//if mpt is empty
+	if mpt.db == nil {
+		encodedKey := keyToHex(key)
+		encodedKey = append(encodedKey, 16)
+		encodedKey = compact_encode(encodedKey)
+		n := Node{}
+		n.node_type = 2
+		n.branch_value = [17]string{}
+		n.flag_value.encoded_prefix = encodedKey
+		n.flag_value.value = new_value
+		root := n.hash_node()
+		
+		mpt.db = map[string]Node { 
+			root : n,
+		}
+	
+		fmt.Println(mpt)
+	} else {
+		
+	}
+	
+	 
+	
 }
 
 func (mpt *MerklePatriciaTrie) Delete(key string) {
 	// TODO
 }
 
-func compact_encode(hex_array []uint8) []uint8 {
-	// TODO
-	return []uint8{}
+func compact_decode(hex_array []uint8) []uint8 {
+	decoded_arr := []uint8{}
+	for i := 0; i < len(hex_array); i += 1 {
+		firstPart := hex_array[i] / 16
+		secondPart := hex_array[i] % 16
+		decoded_arr = append(decoded_arr, firstPart)
+		decoded_arr = append(decoded_arr, secondPart)
+	}
+
+	if decoded_arr[0] == 0 || decoded_arr[0] == 2 {
+		decoded_arr = append(decoded_arr[:0], decoded_arr[1:]...)
+		decoded_arr = append(decoded_arr[:0], decoded_arr[1:]...)
+	} else if decoded_arr[0] == 1 || decoded_arr[0] == 3 {
+		decoded_arr = append(decoded_arr[:0], decoded_arr[1:]...)
+	}
+	return decoded_arr
 }
 
+// TODO: how we send prefix to function?
+
 // If Leaf, ignore 16 at the end
-func compact_decode(encoded_arr []uint8) []uint8 {
-	// TODO
-	return []uint8{}
+func compact_encode(encoded_arr []uint8) []uint8 {
+	//encoded_arr = [] {1, 6, 1}
+	term := 0
+	if encoded_arr[len(encoded_arr)-1] == 16 {
+		term = 1
+		encoded_arr = encoded_arr[:len(encoded_arr)-1]
+	} else {
+		term = 0
+	}
+	
+	oddlen := len(encoded_arr) % 2
+	flags := 2*term + oddlen
+
+	if oddlen == 1 {
+		encoded_arr = append([]uint8{uint8(flags)}, encoded_arr...)
+	} else {
+		encoded_arr = append([]uint8{0}, encoded_arr...)
+		encoded_arr = append([]uint8{uint8(flags)}, encoded_arr...)
+	}
+
+	result := []uint8{}
+	for i := 0; i < len(encoded_arr); i += 2 {
+		result = append(result, (16*encoded_arr[i] + 1*encoded_arr[i+1]))
+	}
+	
+	return result
 }
 
 func test_compact_encode() {
@@ -71,3 +135,16 @@ func (node *Node) hash_node() string {
 	sum := sha3.Sum256([]byte(str))
 	return "HashStart_" + hex.EncodeToString(sum[:]) + "_HashEnd"
 }
+
+const hextable = "0123456789abcdef"
+
+//convert key to hex array
+func keyToHex(key string) []uint8 {
+	result := []uint8{}
+	encodedByteString := hex.EncodeToString([]byte(key))
+	for _, encodedByte := range encodedByteString {
+		result = append(result, uint8(strings.IndexByte(hextable, uint8(encodedByte))))
+	}
+	return result
+}
+
