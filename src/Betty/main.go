@@ -2,20 +2,33 @@ package main
 
 import (
 	"fmt"
-
 )
 
 func main() {
 	MerklePatriciaTrie := &MerklePatriciaTrie{}
-	fmt.Print("After insert: ")
-	MerklePatriciaTrie.Insert("ab","ancdgg")
-//	MerklePatriciaTrie.Insert("abc","ancghjd")
-	fmt.Print("Get value: ")
-	fmt.Println(MerklePatriciaTrie.Get("ab"))
-//	fmt.Println(keyToHex("verb"))
-//	fmt.Println(compact_encode([]uint8{6,1,6,2}))
-//	test_compact_encode()
-//	fmt.Println(compact_encode(keyToHex("ab")))
+	fmt.Println("After insert: ")
+//	MerklePatriciaTrie.Insert("ab","ancdgg")
+//	fmt.Println("After insert: ")
+//	MerklePatriciaTrie.Insert("aff","123")
+//	fmt.Println("After insert: ")
+	//"ab" some same one left
+	// "f" "a12" "1ab" no same one
+	
+//	MerklePatriciaTrie.Insert("1ab","raggrhrehtrh")
+//	MerklePatriciaTrie.Insert("pab","kitten")
+//	fmt.Println("After insert: ")
+	MerklePatriciaTrie.Insert("p","apple")
+	MerklePatriciaTrie.Insert("aaaaa","banana")
+	MerklePatriciaTrie.Insert("aaaap","orange")
+	fmt.Println("After insert: ")
+	MerklePatriciaTrie.Insert("aa","new")
+	//2 ext 3 leaf 2 branch (1 with value)
+	
+	
+	fmt.Println("Get value: ")
+	fmt.Println(MerklePatriciaTrie.Get("p"))
+
+
 	
 }
 
