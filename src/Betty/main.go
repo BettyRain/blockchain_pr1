@@ -17,6 +17,7 @@ func main() {
 //	MerklePatriciaTrie.Insert("1ab","raggrhrehtrh")
 //	MerklePatriciaTrie.Insert("pab","kitten")
 //	fmt.Println("After insert: ")
+
 	MerklePatriciaTrie.Insert("p","apple")
 	MerklePatriciaTrie.Insert("aaaaa","banana")
 	MerklePatriciaTrie.Insert("aaaap","orange")
@@ -24,10 +25,20 @@ func main() {
 	MerklePatriciaTrie.Insert("aa","new")
 	//2 ext 3 leaf 2 branch (1 with value)
 	
+//	MerklePatriciaTrie.Insert("apcan","apple")
+	
+//	MerklePatriciaTrie.Insert("rpple","banana")
+//	fmt.Println("After insert: ")
+//	MerklePatriciaTrie.Insert("Ap1234","orange")
 	
 	fmt.Println("Get value: ")
-	fmt.Println(MerklePatriciaTrie.Get("p"))
+	fmt.Println(MerklePatriciaTrie.Get("aaaap"))
+	
+	fmt.Println("Delete value: ")
+	MerklePatriciaTrie.Delete("aa")
 
+	fmt.Println("Get value: ")
+	fmt.Println(MerklePatriciaTrie.Get("aaaaa"))
 
 	
 }

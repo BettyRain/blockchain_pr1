@@ -38,16 +38,17 @@ func (mpt *MerklePatriciaTrie) Get(key string) string {
 		if (intersectionCount(string (root_key_decoded), string (key_hex)) > 0) {
 			n = mpt.GetByNode(root_node,[]byte (key_hex))
 		}  else {
-			fmt.Println("case 342 out")
+//			fmt.Println("case 342 out")
 		return "no such key"
 		}
 		
 	}
-		fmt.Println("out")
-		fmt.Println(n)
+
+//		fmt.Println("out")
+//		fmt.Println(n)
 		switch n.node_type {
 			case 1:
-			fmt.Println("case 1 out")
+//			fmt.Println("case 1 out")
 			if (n.branch_value[16] != "") {
 				return n.branch_value[16]
 			} else {
@@ -55,7 +56,7 @@ func (mpt *MerklePatriciaTrie) Get(key string) string {
 			}
 
 			case 2:
-			fmt.Println("case 2 out")
+//			fmt.Println("case 2 out")
 			if (n.flag_value.value != "") {
 				return n.flag_value.value
 			} else {
@@ -189,8 +190,8 @@ func (mpt *MerklePatriciaTrie) InsertByNode(node Node, key []byte, new_value str
 				rest := decoded_key[index_ext:]
 				branch_nib := decoded_key_node[index_ext:]
 									
-					fmt.Println(rest)
-					fmt.Println(branch_nib)
+				//	fmt.Println(rest)
+				//	fmt.Println(branch_nib)
 				//create branch
 				branch := [17] string {}
 
@@ -260,8 +261,9 @@ func (mpt *MerklePatriciaTrie) InsertByNode(node Node, key []byte, new_value str
 				n_ext_hash := n_ext.hash_node()
 				mpt.db[n_ext_hash] = n_ext
 				if (isRoot == true) {
-					mpt.root = n_ext.hash_node()
+					mpt.root = n_ext_hash
 				}
+				return n_ext_hash
 							
 			} else {
 				fmt.Println("no same")
@@ -319,6 +321,7 @@ func (mpt *MerklePatriciaTrie) InsertByNode(node Node, key []byte, new_value str
 				if (isRoot == true) {
 					mpt.root = n_br.hash_node()
 				}
+				return n_br_hash
 			}
 			
 			//leaf node
@@ -514,8 +517,8 @@ func (mpt *MerklePatriciaTrie) InsertByNode(node Node, key []byte, new_value str
 
 func (mpt *MerklePatriciaTrie) GetByNode(node Node, key []byte) Node {
 	n := Node{}
-	fmt.Println("start")
-	fmt.Println(node)
+//	fmt.Println("start")
+//	fmt.Println(node)
 
 	if len(key) == 0 {
 		return node
@@ -527,11 +530,11 @@ func (mpt *MerklePatriciaTrie) GetByNode(node Node, key []byte) Node {
 	
 	switch node.node_type {	
 	case 2:
-	fmt.Println("case2")
+//	fmt.Println("case2")
 		key_node := node.flag_value.encoded_prefix
 		key_decoded := compact_decode(key_node)
-	fmt.Println(key)
-	fmt.Println(key_decoded)
+//	fmt.Println(key)
+//	fmt.Println(key_decoded)
 		hash_node := node.flag_value.value //hash_value of child Node
 		n = mpt.db[hash_node] //child node (next node)
 
@@ -541,28 +544,28 @@ func (mpt *MerklePatriciaTrie) GetByNode(node Node, key []byte) Node {
 		switch node_prefix {
 			//extension node
 			case 0,1:
-			fmt.Println("case 01")
+//			fmt.Println("case 01")
 				//decerase nibbles
 				index := intersectionCount (string(key_decoded), string(key))
 				if len(key) > len(key_decoded) && index > 0 {
 				//decrease key from beginning
-				fmt.Println("1if")
+//				fmt.Println("1if")
 				return mpt.GetByNode(n, key[index:])
 				//same key all - go to branch node - return value
 				} else if len(key) == len(key_decoded) && string(key_decoded) == string(key) {
-					fmt.Println("2if")
+//					fmt.Println("2if")
 					return mpt.db[node.flag_value.value]
 				} else if (len(key) <= len(key_decoded)) && string(key_decoded) != string(key) {
-					fmt.Println("3if")
+//					fmt.Println("3if")
 					return Node{}			
 				} else {
-					fmt.Println("4if")
+//					fmt.Println("4if")
 					return n
 				}
 				
 			//leaf node
 			case 2,3:
-			fmt.Println("case23")
+//			fmt.Println("case23")
 				//same key - return node
 				//not same - return nil
 				if string(key_decoded) == string(key) {
@@ -576,8 +579,8 @@ func (mpt *MerklePatriciaTrie) GetByNode(node Node, key []byte) Node {
 		}
 	//branch node
 	case 1:
-	fmt.Println("case1")
-		fmt.Println(key)
+//	fmt.Println("case1")
+//		fmt.Println(key)
 		//no hash in branch
 
 		if (len(key) == 0){
@@ -613,7 +616,153 @@ func (mpt *MerklePatriciaTrie) GetByNode(node Node, key []byte) Node {
 
 
 func (mpt *MerklePatriciaTrie) Delete(key string) {
-	// TODO
+	key_hex := keyToHex(key)
+	root_node := mpt.db[mpt.root]
+	n := Node{}
+	
+	//find leaf node with that key
+	switch root_node.node_type {
+		case 1:
+		n = mpt.GetByNode(root_node,[]byte (key_hex))
+		case 2:
+		root_key := root_node.flag_value.encoded_prefix
+		root_key_decoded := compact_decode(root_key)
+		if (intersectionCount(string (root_key_decoded), string (key_hex)) > 0) {
+			n = mpt.GetByNode(root_node,[]byte (key_hex))
+		}  else {
+			
+		//	return "no such key in trie"
+		}
+	}
+	key_n_check := mpt.KeyByValue(n)
+
+	//if leaf is root
+	if (key_n_check == mpt.root) {
+		delete(mpt.db, key_n_check)
+		mpt.root = ""
+	} else {
+		//find parent node
+		parent_node_hash, index := mpt.FindParentNode(n, key_n_check)
+		parent_node := mpt.db[parent_node_hash]
+		fmt.Println(index)
+	
+		//count number of values in branch
+		count := 0
+		for _, branch_values := range parent_node.branch_value {
+			if (branch_values != "") {
+				count += 1
+			}
+		}
+	
+		if (count-1 > 1) {
+			//more than 1 value left in branch
+			//delete hash from branch
+			parent_node.branch_value[index] = ""
+			mpt.db[parent_node_hash] = parent_node
+			//delete leaf
+			delete(mpt.db, key_n_check)
+			
+		} else if (parent_node_hash == mpt.root) {
+			//only one value left in branch and branch is root
+			parent_node.branch_value[index] = ""
+			
+			//find hash value of left leaf
+			hash_last_leaf := ""
+			index_count := -1
+			index_lasf_leaf := 0
+			for _, branch_values := range parent_node.branch_value {
+				index_count += 1
+				if (branch_values != "") {
+					hash_last_leaf = branch_values
+					index_lasf_leaf = index_count
+				}
+			}
+			
+			//delete leaf & branch
+			delete(mpt.db, key_n_check)
+			delete(mpt.db, parent_node_hash)
+			
+			last_leaf := mpt.db[hash_last_leaf]
+			
+			//change leaf prefix
+			decoded_prefix := compact_decode(last_leaf.flag_value.encoded_prefix)
+			last_leaf_prefix := [] uint8 {}
+			last_leaf_prefix = append (last_leaf_prefix, uint8(index_lasf_leaf))			
+			last_leaf_prefix = append (last_leaf_prefix, decoded_prefix...)			
+			last_leaf_prefix = append (last_leaf_prefix, 16)		
+			last_leaf.flag_value.encoded_prefix = compact_encode(last_leaf_prefix)
+			
+			//make last leaf as root
+			mpt.root = hash_last_leaf
+			mpt.db[hash_last_leaf] = last_leaf
+	
+			
+		} else {
+			fmt.Println("here")
+			//only one value left in branch			
+			//parent_node <- branch
+			
+			//find parent of branch
+			ext_node_hash, index_ex := mpt.FindParentNode(mpt.db[parent_node_hash], parent_node_hash)
+			ext_node := mpt.db[ext_node_hash]
+			ext_node_nibbles := ext_node.flag_value.encoded_prefix
+			
+			parent_node.branch_value[index] = ""
+			
+			//find hash value of left leaf
+			hash_last_leaf := ""
+			index_ex = -1
+			index_lasf_leaf := 0
+			for _, branch_values := range parent_node.branch_value {
+				index_ex += 1
+				if (branch_values != "") {
+					hash_last_leaf = branch_values
+					index_lasf_leaf = index_ex
+				}
+			}
+			
+			last_leaf := mpt.db[hash_last_leaf]
+			
+			//change leaf prefix
+			decoded_prefix := compact_decode(last_leaf.flag_value.encoded_prefix)
+			ext_node_nibbles = compact_decode(ext_node_nibbles)
+			last_leaf_prefix := [] uint8 {}
+			last_leaf_prefix = append (last_leaf_prefix, ext_node_nibbles...)			
+			last_leaf_prefix = append (last_leaf_prefix, uint8(index_lasf_leaf))			
+			last_leaf_prefix = append (last_leaf_prefix, decoded_prefix...)			
+			last_leaf_prefix = append (last_leaf_prefix, 16)		
+			last_leaf.flag_value.encoded_prefix = compact_encode(last_leaf_prefix)
+			
+			//delete leaf and branch
+			delete(mpt.db, key_n_check)
+			delete(mpt.db, parent_node_hash)
+			
+			if (ext_node_hash == mpt.root) {
+
+				//1var: extension was root
+				delete(mpt.db, ext_node_hash)
+
+				mpt.root = hash_last_leaf
+				mpt.db[hash_last_leaf] = last_leaf
+				
+			} else {
+				fmt.Println("here22")
+				//2var: no roots
+				//add leaf to upper branch
+				//find upper branch by extension
+				upper_branch_hash, index_up_br := mpt.FindParentNode(ext_node, ext_node_hash)
+				upper_branch := mpt.db[upper_branch_hash]
+				delete(mpt.db, ext_node_hash)
+				upper_branch.branch_value[index_up_br] = hash_last_leaf
+				mpt.db[hash_last_leaf] = last_leaf
+				mpt.db[upper_branch_hash] = upper_branch
+			}		
+		
+		}
+	}
+	fmt.Println(mpt)
+
+
 }
 
 func compact_decode(hex_array []uint8) []uint8 {
@@ -724,6 +873,25 @@ func (mpt *MerklePatriciaTrie) KeyByValue (node Node) string {
 		}
 	}
 	return ""
+}
+
+func (mpt *MerklePatriciaTrie) FindParentNode (node Node, key string) (string, int) {
+		index := 0
+		for key_node, node_db := range mpt.db {
+			//go through branch values
+			index = -1
+			for _, branch_values := range node_db.branch_value {
+			 	index+=1
+		        if (branch_values == key) {
+		            return key_node, index
+		        }
+			}
+			 //go through ext values
+			 if (node_db.flag_value.value == key) {
+					return key_node, index
+			}
+		}
+	return "",0
 }
 
 
