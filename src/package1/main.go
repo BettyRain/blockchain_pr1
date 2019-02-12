@@ -11,9 +11,11 @@ func main() {
 	mpt.Insert("a", "apple")
 	mpt.Insert("b", "banana")
 	mpt.Insert("ab", "new")
+//		mpt.Insert("abc", "newd")
+
 	inserted_trie1 := mpt.Order_nodes()
 
-	mpt.Delete("c")
+	//mpt.Delete("ab")
 	inserted_trie2 := mpt.Order_nodes()
 
 	mpt.Delete("ab")

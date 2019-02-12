@@ -704,6 +704,7 @@ func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 				index_deletion = 16
 			}
 		}
+		search_value = node.branch_value[16]
 		fmt.Println(index_deletion)
 		if index_deletion == 16 {
 			node.branch_value[16] = ""
@@ -743,15 +744,17 @@ func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 				mpt.db[parent_node_hash] = parent_node
 			} else if (index_lasf_leaf == 16) && (parent_node.node_type == 1) {
 				//value from branch and parent is branch
+				delete(mpt.db, key)
 				fmt.Println("Parent node type is 1")
 				f_leaf := Flag_value{encoded_prefix: []uint8{}, value: search_value}
-				n_leaf := Node{node_type: 2, branch_value: [17]string{}, flag_value: f_leaf}
-				n_leaf_hash := n_leaf.hash_node()
-				parent_node.branch_value[parent_index] = n_leaf_hash
-				delete(mpt.db, key)
+				new_leaf := Node{node_type: 2, branch_value: [17]string{}, flag_value: f_leaf}
+				new_leaf_hash := new_leaf.hash_node()
+				parent_node.branch_value[parent_index] = new_leaf_hash
+				
+				mpt.db[new_leaf_hash] = new_leaf
 				mpt.db[parent_node_hash] = parent_node
-				mpt.db[n_leaf_hash] = n_leaf
-				fmt.Println("end")
+				
+				fmt.Println(mpt)
 
 			} else if (child_node.node_type == 1) && (parent_node.node_type == 1) {
 				//parent node -> branch
