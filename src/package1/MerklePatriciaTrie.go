@@ -1,4 +1,4 @@
-package package1
+package main
 
 import (
 	"encoding/hex"
@@ -791,6 +791,7 @@ func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 			prefix_new := [] uint8 {}
 			prefix_new = append(prefix_new, uint8(index_lasf_leaf))
 			prefix_new = append(prefix_new, prefix...)
+			prefix_new = append(prefix_new, 16)
 			last_leaf.flag_value.encoded_prefix = compact_encode (prefix_new)
 			delete(mpt.db, key)
 			mpt.db[hash_last_leaf] = last_leaf
