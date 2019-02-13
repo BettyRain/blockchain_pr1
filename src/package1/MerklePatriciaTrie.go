@@ -781,9 +781,19 @@ func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 		}
 		fmt.Println("INDEX LAST LEAF")
 		fmt.Println(index_lasf_leaf)
+				fmt.Println(count)
+
 		//if branch is root
 		if (key == mpt.root) && (count-1 <= 1) {
+			last_leaf := mpt.db[hash_last_leaf]
+			prefix := last_leaf.flag_value.encoded_prefix
+			prefix = compact_decode(prefix)
+			prefix_new := [] uint8 {}
+			prefix_new = append(prefix_new, uint8(index_lasf_leaf))
+			prefix_new = append(prefix_new, prefix...)
+			last_leaf.flag_value.encoded_prefix = compact_encode (prefix_new)
 			delete(mpt.db, key)
+			mpt.db[hash_last_leaf] = last_leaf
 			mpt.root = hash_last_leaf
 		} else if count-1 > 1 {
 			//branch has > 2 values
@@ -792,6 +802,7 @@ func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 			mpt.db[key] = node
 		} else {
 			//branch left with 1 value
+			fmt.Println("WE ARE HEERREEEE")
 			fmt.Println(parent_node)
 			child_node := mpt.db[hash_last_leaf]
 			fmt.Println(child_node)
