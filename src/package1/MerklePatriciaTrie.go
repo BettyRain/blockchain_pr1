@@ -66,11 +66,8 @@ func (mpt *MerklePatriciaTrie) Get(key string) (string, error) {
 func (mpt *MerklePatriciaTrie) Insert(key string, new_value string) {
 	n := Node{}
 	encoded_key := keyToHex(key)
-	fmt.Println(" ----INSERTION----- ")
-	fmt.Println(encoded_key)
-	fmt.Println(" ----INSERTION----- ")
-
 	root_node := mpt.db[mpt.root]
+	
 	switch root_node.node_type {
 	case 1:
 		n = mpt.GetByNode(root_node, []byte(encoded_key))
@@ -90,7 +87,7 @@ func (mpt *MerklePatriciaTrie) Insert(key string, new_value string) {
 		n.branch_value[16] = new_value
 		mpt.db[n_hash] = n
 	} else {
-		//if mpt is empt
+		//if mpt is empty
 		if mpt.db == nil {
 			encoded_key = append(encoded_key, 16)
 			encoded_key = compact_encode(encoded_key)
@@ -108,14 +105,11 @@ func (mpt *MerklePatriciaTrie) Insert(key string, new_value string) {
 			encoded_key = compact_encode(encoded_key)
 			mpt.InsertByNode(mpt.db[mpt.root], []byte(encoded_key), new_value, true)
 		}
-		fmt.Println(mpt)
 	}
 }
 
 func (mpt *MerklePatriciaTrie) InsertByNode(node Node, key []byte, new_value string, isRoot bool) string {
-	//TODO: check 0 values
-	fmt.Println(key)
-	fmt.Println(node)
+
 	if ((len(key) == 0) && node.node_type != 1) || (node.node_type == 0) {
 		return ""
 	}
@@ -123,18 +117,13 @@ func (mpt *MerklePatriciaTrie) InsertByNode(node Node, key []byte, new_value str
 	key_node := node.flag_value.encoded_prefix
 	hash_node := node.flag_value.value //hash_value of Node
 	hashed_old_leaf := mpt.KeyByValue(node)
-	fmt.Println("==========================")
-	fmt.Println(node.node_type)
-	switch node.node_type {
 
+	switch node.node_type {
 	//branch node
 	case 1:
 		decoded_key := []uint8{}
 		branch_value := -1
-		fmt.Println(len(key))
-
 		rest_path := []uint8{}
-
 		if key != nil {
 			decoded_key = compact_decode(key)
 			branch_value = int(decoded_key[0])
@@ -142,10 +131,6 @@ func (mpt *MerklePatriciaTrie) InsertByNode(node Node, key []byte, new_value str
 		} else {
 			branch_value = 16
 		}
-
-		fmt.Println(" ----DECODED-BR----- ")
-		fmt.Println(decoded_key)
-		fmt.Println(" ----DECODED-BR----- ")
 
 		rest_path = append(rest_path, 16)
 		rest_path = compact_encode(rest_path)
@@ -185,18 +170,12 @@ func (mpt *MerklePatriciaTrie) InsertByNode(node Node, key []byte, new_value str
 		case 0, 1:
 			decoded_key_node := compact_decode(key_node) //nibbles of ext decoded
 			decoded_key := compact_decode(key)
-			fmt.Println(" ----DECODED-EXT----- ")
-			fmt.Println(decoded_key_node)
-			fmt.Println(decoded_key)
-			fmt.Println(" ----DECODED-EXT----- ")
-
 			//new leaf with empty prefix
 			f_leaf := Flag_value{encoded_prefix: []uint8{}, value: new_value}
 			n_leaf := Node{node_type: 2, branch_value: [17]string{}, flag_value: f_leaf}
 			n_leaf_hash := n_leaf.hash_node()
-
 			index_ext := intersectionCount(string(decoded_key_node), string(decoded_key))
-			fmt.Println(index_ext)
+
 			if index_ext == len(decoded_key_node) {
 				//all same nibbles
 				branch_node := mpt.db[hash_node]
@@ -208,9 +187,6 @@ func (mpt *MerklePatriciaTrie) InsertByNode(node Node, key []byte, new_value str
 					key_next = decoded_key[index_ext:]
 					key_next = compact_encode(key_next)
 				}
-				fmt.Println("6666")
-				fmt.Println(key_next)
-
 				mpt.InsertByNode(branch_node, key_next, new_value, false)
 
 			} else if (index_ext <= (len(decoded_key_node) - 1)) && (index_ext > 0) {
@@ -360,13 +336,7 @@ func (mpt *MerklePatriciaTrie) InsertByNode(node Node, key []byte, new_value str
 			decoded_key_node := compact_decode(key_node)
 			decoded_key := compact_decode(key)
 
-			fmt.Println(" ----DECODED------ ")
-			fmt.Println(decoded_key_node)
-			fmt.Println(decoded_key)
-			fmt.Println(" ----DECODED------ ")
-			
 			if (len(decoded_key_node) == 0) {
-				fmt.Println("34567898765434567898765")
 				parent_node_hash, parent_index := mpt.FindParentNode(node, hashed_old_leaf)
 				parent_node := mpt.db[parent_node_hash]
 				
@@ -432,23 +402,17 @@ func (mpt *MerklePatriciaTrie) InsertByNode(node Node, key []byte, new_value str
 				} else {
 					parent_node.flag_value.value = n_br_hash
 				}
-				
 				mpt.db[n_br_hash] = n_br
 				mpt.db[hashed_old_leaf] = old_leaf
 				mpt.db[parent_node_hash] = parent_node
-				
-				//parent_node = mpt.db[parent_node_hash]
 				return n_br_hash
 				
 			} else if (decoded_key_node[0] == decoded_key[0]) {
-				
 				hashed_old_leaf := mpt.KeyByValue(node)
 				old_leaf := mpt.db[hashed_old_leaf]
 				delete(mpt.db, hashed_old_leaf)
 
-				//get old leaf  -> n
 				index_ext := intersectionCount(string(decoded_key_node), string(decoded_key))
-
 				common_path := decoded_key_node[:index_ext]
 				rest := decoded_key[index_ext:]
 				branch_nib := decoded_key_node[index_ext:]
@@ -457,36 +421,21 @@ func (mpt *MerklePatriciaTrie) InsertByNode(node Node, key []byte, new_value str
 				f_leaf := Flag_value{encoded_prefix: []uint8{}, value: new_value}
 				n_leaf := Node{node_type: 2, branch_value: [17]string{}, flag_value: f_leaf}
 				n_leaf_hash := n_leaf.hash_node()
-				fmt.Println("NEW LEAF HASH")
-				fmt.Println(n_leaf_hash)
+
 				//create branch
 				//if common = key -> add value
 				//decrease on one value
 				branch := [17]string{}
 
 				if (len(rest)) > 0 && (len(branch_nib)) > 0 {
-					fmt.Println("HERERERER")
-					
-
-					
 					branch_path := rest[0]
 					branch_nibble := branch_nib[0]
-					
-					fmt.Println(branch_path)
-					fmt.Println(branch_nibble)
-					
-					fmt.Println(decoded_key)
-					fmt.Println(decoded_key_node)
-					
 					rest_path := decoded_key[(index_ext + 1):]
 					rest_nibble := decoded_key_node[(index_ext + 1):]
 					
-					fmt.Println(rest_path)
-					fmt.Println(rest_nibble)
-					
 					branch[branch_path] = n_leaf_hash
 					branch[branch_nibble] = hashed_old_leaf
-
+					
 					rest_path = append(rest_path, 16)
 					rest_path = compact_encode(rest_path)
 					rest_nibble = append(rest_nibble, 16)
@@ -625,8 +574,6 @@ func (mpt *MerklePatriciaTrie) InsertByNode(node Node, key []byte, new_value str
 
 func (mpt *MerklePatriciaTrie) GetByNode(node Node, key []byte) Node {
 	n := Node{}
-	fmt.Println("get start")
-	fmt.Println(node)
 	key_node := node.flag_value.encoded_prefix
 	isExt := true
 	if (len(key_node) > 0){
@@ -635,7 +582,6 @@ func (mpt *MerklePatriciaTrie) GetByNode(node Node, key []byte) Node {
 			isExt = false
 		}
 	}
-	fmt.Println(len(key) == 0 && isExt)
 
 	if len(key) == 0 && isExt {
 		return node
@@ -647,7 +593,6 @@ func (mpt *MerklePatriciaTrie) GetByNode(node Node, key []byte) Node {
 
 	switch node.node_type {
 	case 2:
-//		key_node := node.flag_value.encoded_prefix
 		key_decoded := compact_decode(key_node)
 		hash_node := node.flag_value.value //hash_value of child Node
 		n = mpt.db[hash_node]              //child node (next node)
@@ -675,8 +620,6 @@ func (mpt *MerklePatriciaTrie) GetByNode(node Node, key []byte) Node {
 		case 2, 3:
 			//same key - return node
 			//not same - return nil
-			fmt.Println(key)
-			fmt.Println(key_decoded)
 			if reflect.DeepEqual(key_decoded, key) {
 				return node
 			} else {
@@ -731,7 +674,6 @@ func (mpt *MerklePatriciaTrie) Delete(key string) (string, error) {
 	}
 
 	mpt.DeleteByNode(n, n.flag_value.value)
-	fmt.Println(mpt)
 	return "", errors.New("")
 
 }
@@ -739,9 +681,6 @@ func (mpt *MerklePatriciaTrie) Delete(key string) (string, error) {
 func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 
 	key := mpt.KeyByValue(node) //hash value of node with value we need to delete
-	fmt.Println("----------DELETE--------")
-	fmt.Println(node)
-	fmt.Println("----------DELETE--------")
 	parent_node_hash, parent_index := mpt.FindParentNode(node, key)
 	parent_node := mpt.db[parent_node_hash]
 
@@ -752,9 +691,6 @@ func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 		count := 0
 		index_deletion := 0
 
-		fmt.Println("999999index_deletion999999999")
-		fmt.Println(node.branch_value)
-
 		for _, branch_values := range node.branch_value {
 			if branch_values != "" {
 				count += 1
@@ -764,7 +700,6 @@ func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 			}
 		}
 		search_value = node.branch_value[16]
-		fmt.Println(index_deletion)
 		if index_deletion == 16 {
 			node.branch_value[16] = ""
 		}
@@ -779,9 +714,6 @@ func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 				index_lasf_leaf = index_count
 			}
 		}
-		fmt.Println("INDEX LAST LEAF")
-		fmt.Println(index_lasf_leaf)
-				fmt.Println(count)
 
 		//if branch is root
 		if (key == mpt.root) && (count-1 <= 1) {
@@ -803,12 +735,8 @@ func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 			mpt.db[key] = node
 		} else {
 			//branch left with 1 value
-			fmt.Println("WE ARE HEERREEEE")
-			fmt.Println(parent_node)
 			child_node := mpt.db[hash_last_leaf]
-			fmt.Println(child_node)
 			if (index_lasf_leaf == 16) && (parent_node.node_type == 2) {
-				fmt.Println("Parent node type is 2")
 				//value from branch and parent is ext
 				prefix := parent_node.flag_value.encoded_prefix
 				prefix = compact_decode(prefix)
@@ -820,7 +748,6 @@ func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 			} else if (index_lasf_leaf == 16) && (parent_node.node_type == 1) {
 				//value from branch and parent is branch
 				delete(mpt.db, key)
-				fmt.Println("Parent node type is 1")
 				en_prefix := []uint8{}
 				en_prefix = append(en_prefix, 16)
 				f_leaf := Flag_value{encoded_prefix: compact_encode(en_prefix), value: search_value}
@@ -830,13 +757,10 @@ func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 				
 				mpt.db[new_leaf_hash] = new_leaf
 				mpt.db[parent_node_hash] = parent_node
-				
-				fmt.Println(mpt)
 
 			} else if (child_node.node_type == 1) && (parent_node.node_type == 1) {
 				//parent node -> branch
 				//child node (hash_last_leaf) -> branch
-				fmt.Println("branch-branch")
 				node.node_type = 2
 				node.branch_value = [17]string{}
 				node.flag_value.value = hash_last_leaf
@@ -845,7 +769,6 @@ func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 			} else if (child_node.node_type == 1) && (parent_node.node_type == 2) {
 				//parent node -> ext
 				//child node (hash_last_leaf) -> branch
-				fmt.Println("ext-branch")
 				ext_nibbles := compact_decode(parent_node.flag_value.encoded_prefix)
 				ext_nibbles = append(ext_nibbles, uint8(index_lasf_leaf))
 				parent_node.flag_value.value = hash_last_leaf
@@ -856,8 +779,6 @@ func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 			} else if (child_node.node_type == 2) && (parent_node.node_type == 1) {
 				//parent node -> branch
 				//child node (hash_last_leaf) -> ext
-				fmt.Println("branch-ext")
-				
 				ext_nibbles := []uint8{}
 				ext_nibbles = append(ext_nibbles, uint8(index_lasf_leaf))
 				ext_nibbles = append(ext_nibbles, compact_decode(child_node.flag_value.encoded_prefix)...)
@@ -875,11 +796,6 @@ func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 			} else {
 				//parent node -> ext
 				//child node (hash_last_leaf) -> ext
-				fmt.Println("ext-ext")
-				fmt.Println("parent")
-				fmt.Println(parent_node)
-				fmt.Println("child-ext")
-				fmt.Println(child_node)
 				ext_par_nibbles := compact_decode(parent_node.flag_value.encoded_prefix)
 				ext_par_nibbles = append(ext_par_nibbles, uint8(index_lasf_leaf))
 				ext_par_nibbles = append(ext_par_nibbles, compact_decode(child_node.flag_value.encoded_prefix)...)
@@ -899,9 +815,6 @@ func (mpt *MerklePatriciaTrie) DeleteByNode(node Node, search_value string) {
 
 	//node is leaf
 	case 2:
-		fmt.Println("INDEX")
-		fmt.Println(parent_index)
-
 		//count number of values in branch
 		count := 0
 		for _, branch_values := range parent_node.branch_value {
@@ -1025,7 +938,6 @@ func (mpt *MerklePatriciaTrie) KeyByValue(node Node) string {
 
 func (mpt *MerklePatriciaTrie) FindParentNode(node Node, key string) (string, int) {
 	index := 0
-	fmt.Println(key)
 	for key_node, node_db := range mpt.db {
 		//go through branch values
 		index = -1
