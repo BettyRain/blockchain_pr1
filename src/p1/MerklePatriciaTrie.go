@@ -1,4 +1,4 @@
-package main
+package p1
 
 import (
 	"encoding/hex"
@@ -22,9 +22,12 @@ type Node struct {
 
 type MerklePatriciaTrie struct {
 	db map[string]Node
+	kv map[string]string //key value pair
 	//string is a hashed_value of Node
 	root string
 }
+
+
 
 func (mpt *MerklePatriciaTrie) Get(key string) (string, error) {
 	key_hex := keyToHex(key)
@@ -65,6 +68,12 @@ func (mpt *MerklePatriciaTrie) Get(key string) (string, error) {
 
 func (mpt *MerklePatriciaTrie) Insert(key string, new_value string) {
 	n := Node{}
+	//add key-value pair
+	if (mpt.kv == nil) {
+		mpt.kv = make(map[string]string)
+	}
+	mpt.kv[key] = new_value
+	
 	encoded_key := keyToHex(key)
 	root_node := mpt.db[mpt.root]
 	
@@ -655,6 +664,10 @@ func (mpt *MerklePatriciaTrie) Delete(key string) (string, error) {
 	key_hex := keyToHex(key)
 	root_node := mpt.db[mpt.root]
 	n := Node{}
+	_, ok := mpt.kv[key];
+    if ok {
+        delete(mpt.kv, key);
+    }
 
 	//find leaf node with that key
 	switch root_node.node_type {
@@ -999,6 +1012,14 @@ func (node *Node) String() string {
 
 func node_to_string(node Node) string {
 	return node.String()
+}
+
+func (mpt *MerklePatriciaTrie) GetKeyValue () map[string]string {
+	return mpt.kv
+}
+
+func (mpt *MerklePatriciaTrie) GetRoot () string {
+	return mpt.root
 }
 
 func (mpt *MerklePatriciaTrie) Initial() {
