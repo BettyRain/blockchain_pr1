@@ -2,6 +2,7 @@ package p2
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 
@@ -41,11 +42,23 @@ func (blch *Blockchain) Insert (blc Block) {
 				blch.length = heightNewBlock
 			}
 		} else {
-			//add to the end of the list
-			blockList = append(blockList, blc)
+			//if block already exists in blockchain
+			isEqual := false
+			for _, block:= range blockList {
+				if (block.header.hash == blc.header.hash){
+					isEqual = true
+					fmt.Println("equal")
+				}
+			}
+			if (!isEqual) {
+				//add to the end of the list
+				blockList = append(blockList, blc)
+			}
 		}
 		blch.chain[heightNewBlock] = blockList
-		blch.length += 1	
+		if(blch.length < blc.header.size) {
+			blch.length = blc.header.size
+		}	
 	}
 }
 
